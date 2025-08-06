@@ -42,6 +42,18 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Debug: Check if environment variables are set
+  if (!CLIENT_ID || !CLIENT_SECRET || !REFRESH_TOKEN) {
+    return res.status(500).json({ 
+      error: 'Missing environment variables',
+      debug: {
+        hasClientId: !!CLIENT_ID,
+        hasClientSecret: !!CLIENT_SECRET,
+        hasRefreshToken: !!REFRESH_TOKEN
+      }
+    });
+  }
+
   try {
     const response = await getNowPlaying();
 
