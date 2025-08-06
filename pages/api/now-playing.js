@@ -4,6 +4,7 @@ const REFRESH_TOKEN = process.env.SPOTIFY_REFRESH_TOKEN;
 
 const basic = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
 const NOW_PLAYING_ENDPOINT = 'https://api.spotify.com/v1/me/player/currently-playing';
+const RECENTLY_PLAYED_ENDPOINT = 'https://api.spotify.com/v1/me/player/recently-played?limit=1';
 const TOKEN_ENDPOINT = 'https://accounts.spotify.com/api/token';
 
 const getAccessToken = async () => {
@@ -32,6 +33,16 @@ const getNowPlaying = async () => {
   });
 };
 
+const getRecentlyPlayed = async () => {
+  const { access_token } = await getAccessToken();
+
+  return fetch(RECENTLY_PLAYED_ENDPOINT, {
+    headers: {
+      Authorization: `Bearer ${access_token}`,
+    },
+  });
+};
+
 export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -44,7 +55,7 @@ export default async function handler(req, res) {
 
   // Debug: Check if environment variables are set
   if (!CLIENT_ID || !CLIENT_SECRET || !REFRESH_TOKEN) {
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'Missing environment variables',
       debug: {
         hasClientId: !!CLIENT_ID,
@@ -57,28 +68,60 @@ export default async function handler(req, res) {
   try {
     const response = await getNowPlaying();
 
-    if (response.status === 204 || response.status > 400) {
+    // If something is currently playing, return it
+    if (response.status === 200) {
+      const song = await response.json();
+
+      if (song.item && song.is_playing) {
+        const title = song.item.name;
+        const artist = song.item.artists.map((_artist) => _artist.name).join(', ');
+        const album = song.item.album.name;
+        const albumImageUrl = song.item.album.images[0]?.url;
+        const songUrl = song.item.external_urls.spotify;
+        const previewUrl = song.item.preview_url;
+        const duration = song.item.duration_ms;
+        const progress = song.progress_ms;
+
+        return res.status(200).json({
+          isPlaying: true,
+          title,
+          artist,
+          album,
+          albumImageUrl,
+          songUrl,
+          previewUrl,
+          duration,
+          progress,
+        });
+      }
+    }
+
+    // Nothing currently playing, get the last played song
+    const recentResponse = await getRecentlyPlayed();
+
+    if (recentResponse.status !== 200) {
       return res.status(200).json({ isPlaying: false });
     }
 
-    const song = await response.json();
+    const recentData = await recentResponse.json();
 
-    if (!song.item) {
+    if (!recentData.items || recentData.items.length === 0) {
       return res.status(200).json({ isPlaying: false });
     }
 
-    const isPlaying = song.is_playing;
-    const title = song.item.name;
-    const artist = song.item.artists.map((_artist) => _artist.name).join(', ');
-    const album = song.item.album.name;
-    const albumImageUrl = song.item.album.images[0]?.url;
-    const songUrl = song.item.external_urls.spotify;
-    const previewUrl = song.item.preview_url;
-    const duration = song.item.duration_ms;
-    const progress = song.progress_ms;
+    const lastSong = recentData.items[0].track;
+    const playedAt = recentData.items[0].played_at;
+
+    const title = lastSong.name;
+    const artist = lastSong.artists.map((_artist) => _artist.name).join(', ');
+    const album = lastSong.album.name;
+    const albumImageUrl = lastSong.album.images[0]?.url;
+    const songUrl = lastSong.external_urls.spotify;
+    const previewUrl = lastSong.preview_url;
+    const duration = lastSong.duration_ms;
 
     return res.status(200).json({
-      isPlaying,
+      isPlaying: false,
       title,
       artist,
       album,
@@ -86,10 +129,11 @@ export default async function handler(req, res) {
       songUrl,
       previewUrl,
       duration,
-      progress,
+      progress: null, // No progress for last played
+      playedAt, // When it was last played
     });
   } catch (error) {
-    console.error('Error fetching now playing:', error);
-    return res.status(500).json({ error: 'Failed to fetch now playing song' });
+    console.error('Error fetching song data:', error);
+    return res.status(500).json({ error: 'Failed to fetch song data' });
   }
 }
