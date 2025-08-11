@@ -23,7 +23,7 @@ export default function Home() {
       <h2>Test it</h2>
       <p>
         <a 
-          href="/api/now-playing" 
+          href="/api" 
           style={{ color: '#0070f3', textDecoration: 'none' }}
         >
           Click here to test your API →
