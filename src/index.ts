@@ -36,18 +36,23 @@ app.use('/api/song', songRouter);
 // Direct SVG endpoint
 app.get('/api/svg', async (req: Request, res: Response) => {
   try {
+    console.log('SVG endpoint called');
     const songData = await getSpotifySongData();
+    console.log('Song data retrieved:', songData.title);
     
     const options = {
       mobile: req.query.mobile === 'true'
     };
     
     const svg = await generateSpotifySvg(songData, options);
+    console.log('SVG generated, length:', svg.length);
 
     // Set appropriate headers for SVG
-    res.setHeader('Content-Type', 'image/svg+xml');
+    res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
     res.setHeader('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=15');
     res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     
     return res.status(200).send(svg);
   } catch (error) {
@@ -56,10 +61,23 @@ app.get('/api/svg', async (req: Request, res: Response) => {
     const mobile = req.query.mobile === 'true';
     const fallbackSvg = generateFallbackSvg(mobile);
     
-    res.setHeader('Content-Type', 'image/svg+xml');
+    res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
     res.setHeader('Access-Control-Allow-Origin', '*');
     return res.status(200).send(fallbackSvg);
   }
+});
+
+// Test SVG endpoint
+app.get('/api/test-svg', (req: Request, res: Response) => {
+  const testSvg = `
+<svg width="460" height="120" xmlns="http://www.w3.org/2000/svg">
+  <rect width="460" height="120" rx="24" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+  <text x="230" y="60" fill="rgba(255,255,255,0.8)" font-family="Arial, sans-serif" font-size="16" text-anchor="middle" dominant-baseline="middle">🎵 Test SVG Working!</text>
+</svg>`.trim();
+
+  res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  return res.status(200).send(testSvg);
 });
 
 // Health check endpoint (for API calls)

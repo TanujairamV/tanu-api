@@ -1,6 +1,6 @@
 # 🎵 Tanu API
 
-[![Spotify](https://tanuapi.vercel.app/api/svg)](https://tanuapi.vercel.app)
+[![Spotify Now Playing](https://tanuapi.vercel.app/api/svg?v=1)](https://tanuapi.vercel.app)
 
 A modern Node.js API that fetches Spotify song data and provides a beautiful documentation interface. Built with Express, TypeScript, and Vite.
 
@@ -111,7 +111,29 @@ Returns an SVG image showing the current/recent song data. Perfect for README fi
 ```
 
 **Live Example:**
-![Spotify](https://tanuapi.vercel.app/api/svg)
+
+![Spotify Now Playing](https://tanuapi.vercel.app/api/svg?v=1)
+
+**Alternative formats:**
+- **Direct link:** [View SVG](https://tanuapi.vercel.app/api/svg)
+- **Mobile version:** [Mobile SVG](https://tanuapi.vercel.app/api/svg?mobile=true)
+- **Test SVG:** ![Test](https://tanuapi.vercel.app/api/test-svg)
+
+<details>
+<summary>🔧 Troubleshooting SVG Display</summary>
+
+If the SVG doesn't display above, try:
+
+1. **Direct URL:** https://tanuapi.vercel.app/api/svg
+2. **Check if API is running:** https://tanuapi.vercel.app/health
+3. **View JSON data:** https://tanuapi.vercel.app/api/song
+
+The SVG might not display if:
+- Spotify API credentials are not configured
+- No recent Spotify activity
+- GitHub is caching the image
+
+</details>
 
 ### `GET /health`
 
