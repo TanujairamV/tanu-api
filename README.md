@@ -1,10 +1,13 @@
 # 🎵 Tanu API
 
+[![Spotify](https://tanuapi.vercel.app/api/svg)](https://tanuapi.vercel.app)
+
 A modern Node.js API that fetches Spotify song data and provides a beautiful documentation interface. Built with Express, TypeScript, and Vite.
 
 ## ✨ Features
 
 - **Real-time Spotify Integration** - Get currently playing or recently played songs
+- **Beautiful SVG Generation** - Glassmorphism design with shiny text effects and visualizer
 - **Interactive Documentation** - Beautiful web interface with live API testing
 - **Modern Tech Stack** - TypeScript, Express, Vite, ES Modules
 - **Security First** - CORS, Helmet, and environment variable protection
@@ -62,7 +65,9 @@ A modern Node.js API that fetches Spotify song data and provides a beautiful doc
    ```
 
 5. **Visit the documentation**
-   Open <http://localhost:8080> in your browser (or your deployed URL)
+   Open <http://localhost:8080> in your browser
+   
+   **Live Demo:** <https://tanuapi.vercel.app>
 
 ## 📚 API Endpoints
 
@@ -102,8 +107,11 @@ Returns an SVG image showing the current/recent song data. Perfect for README fi
 **Usage in README:**
 
 ```markdown
-![Spotify](https://your-vercel-domain.vercel.app/api/svg)
+![Spotify](https://tanuapi.vercel.app/api/svg)
 ```
+
+**Live Example:**
+![Spotify](https://tanuapi.vercel.app/api/svg)
 
 ### `GET /health`
 
@@ -153,13 +161,24 @@ tanu-api/
 3. Get your Client ID and Client Secret
 4. Set up OAuth to get a refresh token
 
-## 🎨 Features
+## 🎨 SVG Features
 
-- **Interactive Documentation** - Test API endpoints directly from the browser
+- **Glassmorphism Design** - Beautiful glass effect with blurred album background
+- **Shiny Text Effects** - Animated gradient text with shimmer effects
+- **Always-Visible Visualizer** - Animated bars when playing, static when paused
 - **Real-time Updates** - Live song data with album artwork
-- **Responsive Design** - Works on desktop and mobile
+- **Responsive Design** - Works on desktop and mobile (`?mobile=true`)
+- **Progress Bar** - Shows current playback progress with animated pin
 - **Error Handling** - Graceful fallbacks for API failures
 - **Caching** - Smart token caching for optimal performance
+
+## 🚀 Live Demo
+
+**API Documentation:** <https://tanuapi.vercel.app>
+
+**Direct SVG:** <https://tanuapi.vercel.app/api/svg>
+
+**Mobile Version:** <https://tanuapi.vercel.app/api/svg?mobile=true>
 
 ## 📄 License
 
