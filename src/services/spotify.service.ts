@@ -63,10 +63,10 @@ interface CachedToken {
   expiresAt: number;
 }
 
-// Spotify API credentials
-const CLIENT_ID = '8049036af92848fab9cdb142091b84f6';
-const CLIENT_SECRET = '8c478199766c454b886a8e52744bdaff';
-const REFRESH_TOKEN = 'AQCzK7YlhhrJSTbDiIOjDXB-5qQ8__20Sm4MW9K8HfOKtznhRwSQ3VV5HyYksvdjbCSHO6pyWCnAQ3nsoDGCQD3s_TxZZKBptxFJ3nA2vOWlrcjW-QFIwDTvIkj8puCs2Ec';
+// Spotify API credentials from environment variables
+const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID || '8049036af92848fab9cdb142091b84f6';
+const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET || '8c478199766c454b886a8e52744bdaff';
+const REFRESH_TOKEN = process.env.SPOTIFY_REFRESH_TOKEN || 'AQCzK7YlhhrJSTbDiIOjDXB-5qQ8__20Sm4MW9K8HfOKtznhRwSQ3VV5HyYksvdjbCSHO6pyWCnAQ3nsoDGCQD3s_TxZZKBptxFJ3nA2vOWlrcjW-QFIwDTvIkj8puCs2Ec';
 
 const basic = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
 const TOKEN_ENDPOINT = 'https://accounts.spotify.com/api/token';

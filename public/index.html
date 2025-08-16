@@ -255,7 +255,7 @@
                             <img id="svgImage" src="" alt="Spotify Song SVG" style="border: 1px solid #ddd; border-radius: 8px;">
                         </div>
                         <p style="font-size: 0.9rem; color: #666;">
-                            Use this URL in your README: <code id="svgUrl">/api/song/svg</code>
+                            Use this URL in your README: <code id="svgUrl">/api/svg</code>
                         </p>
                     </div>
                     <div id="songDisplay" style="display: none;"></div>
@@ -414,27 +414,51 @@ print(svg_content)</div>
             const responseBox = document.getElementById('responseBox');
             const songDisplay = document.getElementById('songDisplay');
             const svgPreview = document.getElementById('svgPreview');
-            const svgImage = document.getElementById('svgImage');
+            
+            if (!button || !svgPreview) {
+                console.error('Required elements not found');
+                return;
+            }
             
             button.disabled = true;
             button.textContent = 'Loading SVG...';
-            responseBox.style.display = 'none';
-            songDisplay.style.display = 'none';
+            
+            if (responseBox) responseBox.style.display = 'none';
+            if (songDisplay) songDisplay.style.display = 'none';
             svgPreview.style.display = 'block';
             
             try {
                 // Add timestamp to prevent caching for demo
                 const timestamp = new Date().getTime();
-                svgImage.src = `/api/svg?t=${timestamp}`;
-                svgImage.onload = () => {
+                const svgUrl = `/api/simple-svg?t=${timestamp}`;
+                
+                // Create new image element to avoid null reference
+                svgPreview.innerHTML = `
+                    <h4>SVG Preview:</h4>
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 10px 0;">
+                        <img id="svgImageNew" src="${svgUrl}" alt="Spotify Song SVG" style="border: 1px solid #ddd; border-radius: 8px; max-width: 100%;">
+                    </div>
+                    <p style="font-size: 0.9rem; color: #666;">
+                        Use this URL in your README: <code>${window.location.origin}/api/simple-svg</code>
+                    </p>
+                `;
+                
+                const newSvgImage = document.getElementById('svgImageNew');
+                if (newSvgImage) {
+                    newSvgImage.onload = () => {
+                        button.disabled = false;
+                        button.textContent = 'Preview SVG';
+                    };
+                    newSvgImage.onerror = () => {
+                        svgPreview.innerHTML = '<p style="color: red;">Failed to load SVG - Check if API is running</p>';
+                        button.disabled = false;
+                        button.textContent = 'Preview SVG';
+                    };
+                } else {
                     button.disabled = false;
                     button.textContent = 'Preview SVG';
-                };
-                svgImage.onerror = () => {
-                    svgPreview.innerHTML = '<p style="color: red;">Failed to load SVG</p>';
-                    button.disabled = false;
-                    button.textContent = 'Preview SVG';
-                };
+                }
+                
             } catch (error) {
                 svgPreview.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
                 button.disabled = false;

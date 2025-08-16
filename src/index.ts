@@ -106,15 +106,29 @@ app.get('/api/test-svg', (req: Request, res: Response) => {
 app.get('/api/simple-svg', async (req: Request, res: Response) => {
   res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
   res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=15');
   
   try {
+    console.log('Simple SVG endpoint called');
+    console.log('Environment check:', {
+      hasClientId: !!process.env.SPOTIFY_CLIENT_ID,
+      hasClientSecret: !!process.env.SPOTIFY_CLIENT_SECRET,
+      hasRefreshToken: !!process.env.SPOTIFY_REFRESH_TOKEN
+    });
+    
     const songData = await getSpotifySongData();
+    console.log('Song data retrieved for simple SVG:', {
+      title: songData.title,
+      artist: songData.artist,
+      isPlaying: songData.isPlaying
+    });
+    
     const mobile = req.query.mobile === 'true';
     const width = mobile ? 320 : 460;
     const height = mobile ? 80 : 120;
     
-    const title = songData.title || 'No song playing';
-    const artist = songData.artist || 'Unknown artist';
+    const title = (songData.title || 'No song playing').replace(/[<>&"']/g, '');
+    const artist = (songData.artist || 'Unknown artist').replace(/[<>&"']/g, '');
     const status = songData.isPlaying ? 'NOW PLAYING' : 'RECENTLY PLAYED';
     
     const simpleSvg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
@@ -131,12 +145,21 @@ app.get('/api/simple-svg', async (req: Request, res: Response) => {
   <text x="${width-30}" y="65" fill="rgba(255,255,255,0.8)" font-family="Arial, sans-serif" font-size="24" text-anchor="end">♪</text>
 </svg>`;
     
+    console.log('Simple SVG generated successfully');
     return res.status(200).send(simpleSvg);
   } catch (error) {
     console.error('Error in simple SVG:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     const fallback = `<svg width="460" height="120" xmlns="http://www.w3.org/2000/svg">
-  <rect width="460" height="120" rx="24" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
-  <text x="230" y="60" fill="rgba(255,255,255,0.8)" font-family="Arial, sans-serif" font-size="16" text-anchor="middle">🎵 Spotify API Error</text>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:rgba(255,100,100,0.1)" />
+      <stop offset="100%" style="stop-color:rgba(255,100,100,0.05)" />
+    </linearGradient>
+  </defs>
+  <rect width="460" height="120" rx="24" fill="url(#bg)" stroke="rgba(255,100,100,0.3)" stroke-width="1"/>
+  <text x="230" y="50" fill="rgba(255,255,255,0.8)" font-family="Arial, sans-serif" font-size="16" text-anchor="middle">🎵 API Error</text>
+  <text x="230" y="75" fill="rgba(255,255,255,0.6)" font-family="Arial, sans-serif" font-size="12" text-anchor="middle">${errorMessage.substring(0, 40)}</text>
 </svg>`;
     return res.status(200).send(fallback);
   }
