@@ -244,10 +244,11 @@
             <h2>🚀 Live Demo</h2>
             <div class="demo-section">
                 <p>Test the API endpoints directly from this page:</p>
-                <button class="demo-button" onclick="fetchSongData()">Get Current Song</button>
-                <button class="demo-button" onclick="showSvgPreview()">Preview SVG</button>
+                <button class="demo-button" onclick="testConnection()">Test Connection</button>
                 <button class="demo-button" onclick="fetchHealthCheck()">Health Check</button>
                 <button class="demo-button" onclick="fetchDebug()">Debug Info</button>
+                <button class="demo-button" onclick="showSvgPreview()">Preview SVG</button>
+                <button class="demo-button" onclick="fetchSongData()">Get Current Song</button>
                 
                 <div class="response-container">
                     <div id="svgPreview" style="display: none; text-align: center; margin: 20px 0;">
@@ -440,14 +441,17 @@ print(svg_content)</div>
                     <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 10px 0;">
                         <p><strong>Test SVG:</strong></p>
                         <img src="${testUrl}" alt="Test SVG" style="border: 1px solid #ddd; border-radius: 8px; max-width: 100%; margin-bottom: 10px;">
-                        <p><strong>Spotify SVG:</strong></p>
+                        <p><strong>Text-Only SVG (Fast):</strong></p>
+                        <img src="/api/text-svg?t=${timestamp}" alt="Text SVG" style="border: 1px solid #ddd; border-radius: 8px; max-width: 100%; margin-bottom: 10px;">
+                        <p><strong>Full SVG with Album Art:</strong></p>
                         <img id="svgImageNew" src="${simpleUrl}" alt="Spotify Song SVG" style="border: 1px solid #ddd; border-radius: 8px; max-width: 100%;">
                     </div>
                     <p style="font-size: 0.9rem; color: #666;">
                         <strong>URLs:</strong><br>
                         Test: <code>${window.location.origin}/api/test-svg</code><br>
-                        Simple: <code>${window.location.origin}/api/simple-svg</code><br>
-                        Full: <code>${window.location.origin}/api/svg</code>
+                        Text-Only: <code>${window.location.origin}/api/text-svg</code><br>
+                        With Album Art: <code>${window.location.origin}/api/simple-svg</code><br>
+                        Full Featured: <code>${window.location.origin}/api/svg</code>
                     </p>
                 `;
                 
@@ -480,6 +484,11 @@ print(svg_content)</div>
             const songDisplay = document.getElementById('songDisplay');
             const svgPreview = document.getElementById('svgPreview');
             
+            if (!button || !responseBox) {
+                console.error('Required elements not found for debug');
+                return;
+            }
+            
             button.disabled = true;
             button.textContent = 'Debugging...';
             responseBox.style.display = 'block';
@@ -488,15 +497,88 @@ print(svg_content)</div>
             if (svgPreview) svgPreview.style.display = 'none';
             
             try {
+                console.log('Fetching debug info...');
                 const response = await fetch('/api/debug');
+                console.log('Debug response status:', response.status);
+                console.log('Debug response headers:', response.headers.get('content-type'));
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    throw new Error(`Expected JSON but got: ${contentType}. Response: ${text.substring(0, 200)}`);
+                }
+                
                 const data = await response.json();
                 responseBox.textContent = JSON.stringify(data, null, 2);
             } catch (error) {
-                responseBox.textContent = `Debug Error: ${error.message}`;
+                console.error('Debug fetch error:', error);
+                responseBox.textContent = `Debug Error: ${error.message}\n\nThis usually means:\n1. Server is not running (run 'npm run dev')\n2. Build failed (check console for errors)\n3. Port 8080 is blocked or in use`;
             } finally {
                 button.disabled = false;
                 button.textContent = 'Debug Info';
             }
+        }
+        
+        async function testConnection() {
+            const button = document.querySelector('button[onclick="testConnection()"]');
+            const responseBox = document.getElementById('responseBox');
+            const songDisplay = document.getElementById('songDisplay');
+            const svgPreview = document.getElementById('svgPreview');
+            
+            if (!button || !responseBox) {
+                console.error('Required elements not found for connection test');
+                return;
+            }
+            
+            button.disabled = true;
+            button.textContent = 'Testing...';
+            responseBox.style.display = 'block';
+            if (songDisplay) songDisplay.style.display = 'none';
+            if (svgPreview) svgPreview.style.display = 'none';
+            
+            const tests = [
+                { name: 'Server Running', url: '/health', type: 'json' },
+                { name: 'Test SVG', url: '/api/test-svg', type: 'svg' },
+                { name: 'Simple SVG', url: '/api/simple-svg', type: 'svg' },
+                { name: 'Debug Endpoint', url: '/api/debug', type: 'json' }
+            ];
+            
+            let results = 'Connection Test Results:\n\n';
+            
+            for (const test of tests) {
+                try {
+                    responseBox.textContent = results + `Testing ${test.name}...`;
+                    const response = await fetch(test.url);
+                    
+                    if (response.ok) {
+                        if (test.type === 'json') {
+                            await response.json(); // Just test if it parses
+                            results += `✅ ${test.name}: OK\n`;
+                        } else {
+                            const text = await response.text();
+                            if (text.includes('<svg')) {
+                                results += `✅ ${test.name}: OK (SVG)\n`;
+                            } else {
+                                results += `❌ ${test.name}: Invalid SVG\n`;
+                            }
+                        }
+                    } else {
+                        results += `❌ ${test.name}: HTTP ${response.status}\n`;
+                    }
+                } catch (error) {
+                    results += `❌ ${test.name}: ${error.message}\n`;
+                }
+            }
+            
+            results += '\nIf all tests fail, the server is not running.\nRun: npm run dev';
+            responseBox.textContent = results;
+            
+            button.disabled = false;
+            button.textContent = 'Test Connection';
         }
     </script>
 </body>
