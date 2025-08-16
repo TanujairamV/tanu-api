@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tanu API - Spotify Song Data</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #1db954, #191414);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .endpoint {
+            background: #f8f9fa;
+            border-left: 4px solid #1db954;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        
+        .method {
+            display: inline-block;
+            background: #1db954;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-right: 10px;
+        }
+        
+        .url {
+            font-family: 'Courier New', monospace;
+            background: #e9ecef;
+            padding: 8px 12px;
+            border-radius: 4px;
+            display: inline-block;
+            margin: 10px 0;
+        }
+        
+        .demo-section {
+            text-align: center;
+        }
+        
+        .demo-button {
+            background: #1db954;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+        
+        .demo-button:hover {
+            background: #1ed760;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(29, 185, 84, 0.3);
+        }
+        
+        .demo-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .response-container {
+            margin-top: 20px;
+            text-align: left;
+        }
+        
+        .response-box {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .song-display {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .album-art {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+        
+        .song-info h3 {
+            margin-bottom: 5px;
+            color: #1db954;
+        }
+        
+        .song-info p {
+            margin-bottom: 3px;
+            color: #666;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .playing {
+            background: #1db954;
+            animation: pulse 2s infinite;
+        }
+        
+        .not-playing {
+            background: #ccc;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎵 Tanu API</h1>
+            <p>Spotify Song Data & SVG Generation API</p>
+        </div>
+        
+        <div class="card">
+            <h2>📖 API Documentation</h2>
+            <p>This API provides access to Spotify song data and can generate SVGs for README files and other applications.</p>
+            
+            <div class="endpoint">
+                <h3><span class="method">GET</span> Current/Recent Song Data</h3>
+                <div class="url" id="songEndpoint">/api/song</div>
+                <p><strong>Description:</strong> Returns the currently playing song or the most recently played song from Spotify.</p>
+                
+                <h4>Response Format:</h4>
+                <div class="code-block">{
+  "isPlaying": boolean,
+  "title": string,
+  "artist": string,
+  "album": string,
+  "albumImageUrl": string,
+  "songUrl": string,
+  "previewUrl": string | null,
+  "duration": number,
+  "progress": number | null,
+  "playedAt": string (if not currently playing)
+}</div>
+            </div>
+            
+            <div class="endpoint">
+                <h3><span class="method">GET</span> Song SVG for README</h3>
+                <div class="url" id="svgEndpoint">/api/svg</div>
+                <p><strong>Description:</strong> Returns an SVG image showing the current/recent song data. Perfect for embedding in README files!</p>
+                <p><strong>Content-Type:</strong> image/svg+xml</p>
+                <p><strong>Features:</strong></p>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li>Dark theme matching Spotify's design</li>
+                    <li>Shows playing status with visual indicators</li>
+                    <li>Progress bar for currently playing songs</li>
+                    <li>Responsive 400x120px size</li>
+                    <li>Automatic text truncation for long titles</li>
+                </ul>
+            </div>
+            
+            <div class="endpoint">
+                <h3><span class="method">GET</span> Health Check</h3>
+                <div class="url" id="healthEndpoint">/health</div>
+                <p><strong>Description:</strong> Basic health check endpoint to verify the API is running.</p>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>🚀 Live Demo</h2>
+            <div class="demo-section">
+                <p>Test the API endpoints directly from this page:</p>
+                <button class="demo-button" onclick="fetchSongData()">Get Current Song</button>
+                <button class="demo-button" onclick="showSvgPreview()">Preview SVG</button>
+                <button class="demo-button" onclick="fetchHealthCheck()">Health Check</button>
+                
+                <div class="response-container">
+                    <div id="svgPreview" style="display: none; text-align: center; margin: 20px 0;">
+                        <h4>SVG Preview:</h4>
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 10px 0;">
+                            <img id="svgImage" src="" alt="Spotify Song SVG" style="border: 1px solid #ddd; border-radius: 8px;">
+                        </div>
+                        <p style="font-size: 0.9rem; color: #666;">
+                            Use this URL in your README: <code id="svgUrl">/api/song/svg</code>
+                        </p>
+                    </div>
+                    <div id="songDisplay" style="display: none;"></div>
+                    <div id="responseBox" class="response-box" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>💻 Usage Examples</h2>
+            
+            <h3>📄 README.md Integration</h3>
+            <div class="code-block" id="readmeExample"><!-- Add this to your README.md -->
+![Spotify](YOUR_DOMAIN/api/svg)
+
+<!-- Or with a link to your Spotify profile -->
+[![Spotify](YOUR_DOMAIN/api/svg)](https://open.spotify.com/user/your-username)</div>
+            
+            <h3>🌐 HTML Integration</h3>
+            <div class="code-block" id="htmlExample">&lt;!-- Embed as an image --&gt;
+&lt;img src="YOUR_DOMAIN/api/svg" alt="Current Spotify Song" /&gt;
+
+&lt;!-- Or embed the SVG directly --&gt;
+&lt;object data="YOUR_DOMAIN/api/svg" type="image/svg+xml"&gt;&lt;/object&gt;</div>
+            
+            <h3>📊 JavaScript/Fetch (JSON Data)</h3>
+            <div class="code-block" id="jsExample">fetch('YOUR_DOMAIN/api/song')
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error('Error:', error));</div>
+            
+            <h3>🔧 cURL</h3>
+            <div class="code-block" id="curlExample"># Get JSON data
+curl -X GET YOUR_DOMAIN/api/song
+
+# Get SVG
+curl -X GET YOUR_DOMAIN/api/svg</div>
+            
+            <h3>🐍 Python</h3>
+            <div class="code-block" id="pythonExample">import requests
+
+# Get JSON data
+response = requests.get('YOUR_DOMAIN/api/song')
+data = response.json()
+print(data)
+
+# Get SVG content
+svg_response = requests.get('YOUR_DOMAIN/api/svg')
+svg_content = svg_response.text
+print(svg_content)</div>
+        </div>
+        
+        <div class="card">
+            <h2>⚙️ Setup & Configuration</h2>
+            <p>This API requires Spotify API credentials to function. Make sure you have:</p>
+            <ul style="margin: 15px 0; padding-left: 20px;">
+                <li>Spotify Client ID</li>
+                <li>Spotify Client Secret</li>
+                <li>Spotify Refresh Token</li>
+            </ul>
+            <p>The API automatically handles token refresh and caching for optimal performance.</p>
+        </div>
+    </div>
+
+    <script>
+        // Update all URLs with current domain
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentDomain = window.location.origin;
+            
+            // Update endpoint URLs
+            document.getElementById('songEndpoint').textContent = currentDomain + '/api/song';
+            document.getElementById('svgEndpoint').textContent = currentDomain + '/api/svg';
+            document.getElementById('healthEndpoint').textContent = currentDomain + '/health';
+            document.getElementById('svgUrl').textContent = currentDomain + '/api/svg';
+            
+            // Update code examples
+            document.getElementById('readmeExample').innerHTML = document.getElementById('readmeExample').innerHTML.replace(/YOUR_DOMAIN/g, currentDomain);
+            document.getElementById('htmlExample').innerHTML = document.getElementById('htmlExample').innerHTML.replace(/YOUR_DOMAIN/g, currentDomain);
+            document.getElementById('jsExample').innerHTML = document.getElementById('jsExample').innerHTML.replace(/YOUR_DOMAIN/g, currentDomain);
+            document.getElementById('curlExample').innerHTML = document.getElementById('curlExample').innerHTML.replace(/YOUR_DOMAIN/g, currentDomain);
+            document.getElementById('pythonExample').innerHTML = document.getElementById('pythonExample').innerHTML.replace(/YOUR_DOMAIN/g, currentDomain);
+        });
+
+        async function fetchSongData() {
+            const button = document.querySelector('button[onclick="fetchSongData()"]');
+            const responseBox = document.getElementById('responseBox');
+            const songDisplay = document.getElementById('songDisplay');
+            
+            button.disabled = true;
+            button.textContent = 'Loading...';
+            responseBox.style.display = 'block';
+            responseBox.textContent = 'Fetching song data...';
+            songDisplay.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/song');
+                const data = await response.json();
+                
+                responseBox.textContent = JSON.stringify(data, null, 2);
+                
+                // Create visual song display
+                if (data.title && data.title !== 'Not Available') {
+                    songDisplay.innerHTML = `
+                        <div class="song-display">
+                            ${data.albumImageUrl ? `<img src="${data.albumImageUrl}" alt="Album Art" class="album-art">` : ''}
+                            <div class="song-info">
+                                <h3>
+                                    <span class="status-indicator ${data.isPlaying ? 'playing' : 'not-playing'}"></span>
+                                    ${data.title}
+                                </h3>
+                                <p><strong>Artist:</strong> ${data.artist}</p>
+                                <p><strong>Album:</strong> ${data.album}</p>
+                                <p><strong>Status:</strong> ${data.isPlaying ? 'Currently Playing' : 'Recently Played'}</p>
+                                ${data.playedAt ? `<p><strong>Played At:</strong> ${new Date(data.playedAt).toLocaleString()}</p>` : ''}
+                            </div>
+                        </div>
+                    `;
+                    songDisplay.style.display = 'block';
+                }
+                
+            } catch (error) {
+                responseBox.textContent = `Error: ${error.message}`;
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Get Current Song';
+            }
+        }
+        
+        async function fetchHealthCheck() {
+            const button = document.querySelector('button[onclick="fetchHealthCheck()"]');
+            const responseBox = document.getElementById('responseBox');
+            const songDisplay = document.getElementById('songDisplay');
+            const svgPreview = document.getElementById('svgPreview');
+            
+            button.disabled = true;
+            button.textContent = 'Checking...';
+            responseBox.style.display = 'block';
+            responseBox.textContent = 'Checking API health...';
+            songDisplay.style.display = 'none';
+            svgPreview.style.display = 'none';
+            
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                responseBox.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseBox.textContent = `Error: ${error.message}`;
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Health Check';
+            }
+        }
+        
+        async function showSvgPreview() {
+            const button = document.querySelector('button[onclick="showSvgPreview()"]');
+            const responseBox = document.getElementById('responseBox');
+            const songDisplay = document.getElementById('songDisplay');
+            const svgPreview = document.getElementById('svgPreview');
+            const svgImage = document.getElementById('svgImage');
+            
+            button.disabled = true;
+            button.textContent = 'Loading SVG...';
+            responseBox.style.display = 'none';
+            songDisplay.style.display = 'none';
+            svgPreview.style.display = 'block';
+            
+            try {
+                // Add timestamp to prevent caching for demo
+                const timestamp = new Date().getTime();
+                svgImage.src = `/api/svg?t=${timestamp}`;
+                svgImage.onload = () => {
+                    button.disabled = false;
+                    button.textContent = 'Preview SVG';
+                };
+                svgImage.onerror = () => {
+                    svgPreview.innerHTML = '<p style="color: red;">Failed to load SVG</p>';
+                    button.disabled = false;
+                    button.textContent = 'Preview SVG';
+                };
+            } catch (error) {
+                svgPreview.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+                button.disabled = false;
+                button.textContent = 'Preview SVG';
+            }
+        }
+    </script>
+</body>
+</html>

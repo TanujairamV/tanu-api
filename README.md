@@ -1,42 +1,76 @@
-# Spotify Now Playing API
+# 🎵 Tanu API
 
-A Vercel-hosted API endpoint that fetches currently playing song details from Spotify.
+A modern Node.js API that fetches Spotify song data and provides a beautiful documentation interface. Built with Express, TypeScript, and Vite.
 
-## 🎵 Currently Playing
+## ✨ Features
 
-![Spotify Now Playing](https://spotify-now-playing-alpha.vercel.app/svg)
+- **Real-time Spotify Integration** - Get currently playing or recently played songs
+- **Interactive Documentation** - Beautiful web interface with live API testing
+- **Modern Tech Stack** - TypeScript, Express, Vite, ES Modules
+- **Security First** - CORS, Helmet, and environment variable protection
+- **Fast Development** - Hot reload with Vite and Nodemon
 
-## Setup
+## 🚀 Quick Start
 
-1. **Create a Spotify App**
-   - Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
-   - Create a new app
-   - Note your Client ID and Client Secret
+### Prerequisites
 
-2. **Get Refresh Token**
-   - Use the authorization code flow to get a refresh token
-   - You can use this tool: [spotify-auth-pkce-node](https://github.com/tobimori/spotify-auth-pkce-node)
-   - Or follow Spotify's authorization guide
+- Node.js 18+
+- npm or yarn
+- Spotify Developer Account
 
-3. **Environment Variables**
-   - Copy `.env.example` to `.env.local` for local development
-   - Set the following variables in Vercel dashboard for production:
-     - `SPOTIFY_CLIENT_ID`
-     - `SPOTIFY_CLIENT_SECRET`
-     - `SPOTIFY_REFRESH_TOKEN`
+### Installation
 
-4. **Deploy to Vercel**
+1. **Clone the repository**
 
    ```bash
-   npm install -g vercel
-   vercel
+   git clone <your-repo-url>
+   cd tanu-api
    ```
 
-## API Endpoints
+2. **Install dependencies**
 
-### **GET** `/api` - JSON Response
+   ```bash
+   npm install
+   ```
 
-#### Success Response (200)
+3. **Set up environment variables**
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Edit `.env` with your Spotify credentials:
+
+   ```env
+   SPOTIFY_CLIENT_ID=your_client_id
+   SPOTIFY_CLIENT_SECRET=your_client_secret
+   SPOTIFY_REFRESH_TOKEN=your_refresh_token
+   PORT=8080
+   ```
+
+4. **Build and start**
+
+   ```bash
+   npm run build
+   npm start
+   ```
+
+   Or for development:
+
+   ```bash
+   npm run dev
+   ```
+
+5. **Visit the documentation**
+   Open <http://localhost:8080> in your browser (or your deployed URL)
+
+## 📚 API Endpoints
+
+### `GET /api/song`
+
+Returns the currently playing song or the most recently played song.
+
+**Response:**
 
 ```json
 {
@@ -47,59 +81,103 @@ A Vercel-hosted API endpoint that fetches currently playing song details from Sp
   "albumImageUrl": "https://...",
   "songUrl": "https://open.spotify.com/track/...",
   "previewUrl": "https://...",
-  "duration": 240000,
-  "progress": 120000
+  "duration": 180000,
+  "progress": 45000
 }
 ```
 
-#### Not Playing Response (200)
+### `GET /api/svg`
 
-```json
-{
-  "isPlaying": false,
-  "title": "Last Song Title",
-  "artist": "Artist Name",
-  "playedAt": "2024-01-15T10:30:00Z"
-}
-```
+Returns an SVG image showing the current/recent song data. Perfect for README files!
 
-### **GET** `/svg` - SVG Widget
+**Features:**
 
-Returns a dynamic SVG widget perfect for embedding in markdown files:
+- Glassmorphism design with shiny text effects
+- Shows playing status with visual indicators  
+- Progress bar for currently playing songs
+- Always-visible visualizer bars
+- Responsive 460x120px size
+- Automatic text truncation for long titles
+
+**Usage in README:**
 
 ```markdown
-![Spotify Now Playing](https://your-vercel-app.vercel.app/svg)
+![Spotify](https://your-vercel-domain.vercel.app/api/svg)
 ```
 
-## Usage Examples
+### `GET /health`
 
-```javascript
-// Fetch current song
-const response = await fetch('https://your-vercel-app.vercel.app/api');
-const data = await response.json();
+Health check endpoint for monitoring.
 
-if (data.isPlaying) {
-  console.log(`Now playing: ${data.title} by ${data.artist}`);
-} else {
-  console.log(`Last played: ${data.title} by ${data.artist}`);
-}
+## 🛠️ Development
+
+### Scripts
+
+- `npm run dev` - Start development server with hot reload
+- `npm run build` - Build for production
+- `npm start` - Start production server
+- `npm run preview` - Preview production build
+
+### Project Structure
+
+```
+tanu-api/
+├── src/
+│   ├── api/
+│   │   └── song.ts          # Song API routes
+│   ├── services/
+│   │   └── spotify.service.ts # Spotify integration
+│   └── index.ts             # Main server file
+├── public/
+│   └── index.html           # Documentation page
+├── dist/                    # Built files
+└── package.json
 ```
 
-## Local Development
+## 🔧 Configuration
 
-```bash
-npm install
-npm run dev
-```
+### Environment Variables
 
-Visit `http://localhost:3000/api` to test the endpoint.
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `SPOTIFY_CLIENT_ID` | Your Spotify app client ID | Yes |
+| `SPOTIFY_CLIENT_SECRET` | Your Spotify app client secret | Yes |
+| `SPOTIFY_REFRESH_TOKEN` | Your Spotify refresh token | Yes |
+| `PORT` | Server port (default: 8080) | No |
+| `NODE_ENV` | Environment (development/production) | No |
 
-## Features
+### Getting Spotify Credentials
 
-- ✅ **Real-time Updates**: Shows currently playing or recently played songs
-- ✅ **SVG Widget**: Perfect for GitHub READMEs and markdown files
-- ✅ **Fallback Support**: Shows last played song when nothing is active
-- ✅ **Album Art**: Displays actual album covers
-- ✅ **Animated Visualizer**: Dynamic bars when music is playing
-- ✅ **CORS Enabled**: Use from any domain
-- ✅ **Caching**: Optimized for performance
+1. Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
+2. Create a new app
+3. Get your Client ID and Client Secret
+4. Set up OAuth to get a refresh token
+
+## 🎨 Features
+
+- **Interactive Documentation** - Test API endpoints directly from the browser
+- **Real-time Updates** - Live song data with album artwork
+- **Responsive Design** - Works on desktop and mobile
+- **Error Handling** - Graceful fallbacks for API failures
+- **Caching** - Smart token caching for optimal performance
+
+## 📄 License
+
+MIT License - see LICENSE file for details
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## 🐛 Issues
+
+Found a bug? Please open an issue on GitHub with:
+
+- Description of the problem
+- Steps to reproduce
+- Expected vs actual behavior
+- Environment details
