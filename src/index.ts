@@ -35,49 +35,111 @@ app.use('/api/song', songRouter);
 
 // Direct SVG endpoint
 app.get('/api/svg', async (req: Request, res: Response) => {
+  // Set headers first
+  res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=15');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
   try {
     console.log('SVG endpoint called');
-    const songData = await getSpotifySongData();
-    console.log('Song data retrieved:', songData.title);
     
-    const options = {
-      mobile: req.query.mobile === 'true'
-    };
+    // Set a timeout for the entire operation
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('SVG generation timeout')), 10000);
+    });
     
-    const svg = await generateSpotifySvg(songData, options);
-    console.log('SVG generated, length:', svg.length);
-
-    // Set appropriate headers for SVG
-    res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
-    res.setHeader('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=15');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    const svgPromise = (async () => {
+      const songData = await getSpotifySongData();
+      console.log('Song data retrieved:', songData.title || 'No title');
+      
+      const options = {
+        mobile: req.query.mobile === 'true'
+      };
+      
+      const svg = await generateSpotifySvg(songData, options);
+      console.log('SVG generated successfully, length:', svg.length);
+      return svg;
+    })();
     
+    const svg = await Promise.race([svgPromise, timeoutPromise]) as string;
     return res.status(200).send(svg);
+    
   } catch (error) {
     console.error('Error in /api/svg endpoint:', error);
     
+    // Return a working fallback SVG
     const mobile = req.query.mobile === 'true';
-    const fallbackSvg = generateFallbackSvg(mobile);
+    const width = mobile ? 320 : 460;
+    const height = mobile ? 80 : 120;
     
-    res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    const fallbackSvg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:rgba(255,255,255,0.1)" />
+      <stop offset="100%" style="stop-color:rgba(255,255,255,0.05)" />
+    </linearGradient>
+  </defs>
+  <rect width="${width}" height="${height}" rx="24" fill="url(#bg)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+  <text x="${width/2}" y="${height/2-10}" fill="rgba(255,255,255,0.8)" font-family="Arial, sans-serif" font-size="20" text-anchor="middle">🎵</text>
+  <text x="${width/2}" y="${height/2+15}" fill="rgba(255,255,255,0.6)" font-family="Arial, sans-serif" font-size="12" text-anchor="middle">Spotify API Loading...</text>
+</svg>`;
+    
     return res.status(200).send(fallbackSvg);
   }
 });
 
 // Test SVG endpoint
 app.get('/api/test-svg', (req: Request, res: Response) => {
-  const testSvg = `
-<svg width="460" height="120" xmlns="http://www.w3.org/2000/svg">
+  const testSvg = `<svg width="460" height="120" xmlns="http://www.w3.org/2000/svg">
   <rect width="460" height="120" rx="24" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
   <text x="230" y="60" fill="rgba(255,255,255,0.8)" font-family="Arial, sans-serif" font-size="16" text-anchor="middle" dominant-baseline="middle">🎵 Test SVG Working!</text>
-</svg>`.trim();
+</svg>`;
 
   res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
   res.setHeader('Access-Control-Allow-Origin', '*');
   return res.status(200).send(testSvg);
+});
+
+// Simple SVG endpoint without external dependencies
+app.get('/api/simple-svg', async (req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  
+  try {
+    const songData = await getSpotifySongData();
+    const mobile = req.query.mobile === 'true';
+    const width = mobile ? 320 : 460;
+    const height = mobile ? 80 : 120;
+    
+    const title = songData.title || 'No song playing';
+    const artist = songData.artist || 'Unknown artist';
+    const status = songData.isPlaying ? 'NOW PLAYING' : 'RECENTLY PLAYED';
+    
+    const simpleSvg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:rgba(255,255,255,0.1)" />
+      <stop offset="100%" style="stop-color:rgba(255,255,255,0.05)" />
+    </linearGradient>
+  </defs>
+  <rect width="${width}" height="${height}" rx="24" fill="url(#bg)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+  <text x="30" y="35" fill="rgba(255,255,255,0.8)" font-family="Arial, sans-serif" font-size="10" font-weight="600">${status}</text>
+  <text x="30" y="55" fill="rgba(255,255,255,1)" font-family="Arial, sans-serif" font-size="16" font-weight="700">${title.substring(0, 30)}</text>
+  <text x="30" y="75" fill="rgba(255,255,255,0.7)" font-family="Arial, sans-serif" font-size="13">by ${artist.substring(0, 25)}</text>
+  <text x="${width-30}" y="65" fill="rgba(255,255,255,0.8)" font-family="Arial, sans-serif" font-size="24" text-anchor="end">♪</text>
+</svg>`;
+    
+    return res.status(200).send(simpleSvg);
+  } catch (error) {
+    console.error('Error in simple SVG:', error);
+    const fallback = `<svg width="460" height="120" xmlns="http://www.w3.org/2000/svg">
+  <rect width="460" height="120" rx="24" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+  <text x="230" y="60" fill="rgba(255,255,255,0.8)" font-family="Arial, sans-serif" font-size="16" text-anchor="middle">🎵 Spotify API Error</text>
+</svg>`;
+    return res.status(200).send(fallback);
+  }
 });
 
 // Health check endpoint (for API calls)

@@ -20,11 +20,23 @@ const truncateText = (text: string, maxLength: number): string => {
   return text.length > maxLength ? text.substring(0, maxLength - 3) + '...' : text;
 };
 
-// Convert image URL to base64 data URI
+// Convert image URL to base64 data URI with timeout
 const imageToBase64 = async (imageUrl: string): Promise<string> => {
   try {
-    const response = await fetch(imageUrl);
-    if (!response.ok) throw new Error('Failed to fetch image');
+    // Add timeout to prevent hanging
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    
+    const response = await fetch(imageUrl, { 
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'TanuAPI/1.0'
+      }
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) throw new Error(`Failed to fetch image: ${response.status}`);
     
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
@@ -85,10 +97,15 @@ export const generateSpotifySvg = async (songData: SongData, options: SvgOptions
     ? (songData.progress / songData.duration) * 100 
     : 0;
 
-  // Get album image as base64 if available
+  // Get album image as base64 if available (with fallback)
   let albumImageBase64 = '';
   if (songData.albumImageUrl) {
-    albumImageBase64 = await imageToBase64(songData.albumImageUrl);
+    try {
+      albumImageBase64 = await imageToBase64(songData.albumImageUrl);
+    } catch (error) {
+      console.error('Failed to load album image, using fallback:', error);
+      albumImageBase64 = '';
+    }
   }
 
   // Clean dimensions
