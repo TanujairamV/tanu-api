@@ -90,15 +90,27 @@ app.get('/api/svg', async (req: Request, res: Response) => {
   }
 });
 
-// Test SVG endpoint
+// Test SVG endpoint - always works
 app.get('/api/test-svg', (req: Request, res: Response) => {
+  console.log('Test SVG endpoint called');
+  
   const testSvg = `<svg width="460" height="120" xmlns="http://www.w3.org/2000/svg">
-  <rect width="460" height="120" rx="24" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
-  <text x="230" y="60" fill="rgba(255,255,255,0.8)" font-family="Arial, sans-serif" font-size="16" text-anchor="middle" dominant-baseline="middle">🎵 Test SVG Working!</text>
+  <defs>
+    <linearGradient id="testBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:rgba(29,185,84,0.2)" />
+      <stop offset="100%" style="stop-color:rgba(29,185,84,0.1)" />
+    </linearGradient>
+  </defs>
+  <rect width="460" height="120" rx="24" fill="url(#testBg)" stroke="rgba(29,185,84,0.3)" stroke-width="2"/>
+  <text x="230" y="50" fill="rgba(255,255,255,0.9)" font-family="Arial, sans-serif" font-size="18" text-anchor="middle" font-weight="bold">🎵 Test SVG Working!</text>
+  <text x="230" y="75" fill="rgba(255,255,255,0.7)" font-family="Arial, sans-serif" font-size="12" text-anchor="middle">API is running correctly</text>
 </svg>`;
 
   res.setHeader('Content-Type', 'image/svg+xml; charset=utf-8');
   res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Cache-Control', 'no-cache');
+  
+  console.log('Test SVG sent successfully');
   return res.status(200).send(testSvg);
 });
 
@@ -110,11 +122,22 @@ app.get('/api/simple-svg', async (req: Request, res: Response) => {
   
   try {
     console.log('Simple SVG endpoint called');
+    
+    // Check if we have the required environment variables
+    const hasCredentials = process.env.SPOTIFY_CLIENT_ID && 
+                          process.env.SPOTIFY_CLIENT_SECRET && 
+                          process.env.SPOTIFY_REFRESH_TOKEN;
+    
     console.log('Environment check:', {
       hasClientId: !!process.env.SPOTIFY_CLIENT_ID,
       hasClientSecret: !!process.env.SPOTIFY_CLIENT_SECRET,
-      hasRefreshToken: !!process.env.SPOTIFY_REFRESH_TOKEN
+      hasRefreshToken: !!process.env.SPOTIFY_REFRESH_TOKEN,
+      hasAll: hasCredentials
     });
+    
+    if (!hasCredentials) {
+      throw new Error('Missing Spotify credentials in environment variables');
+    }
     
     const songData = await getSpotifySongData();
     console.log('Song data retrieved for simple SVG:', {
@@ -167,7 +190,53 @@ app.get('/api/simple-svg', async (req: Request, res: Response) => {
 
 // Health check endpoint (for API calls)
 app.get('/health', (req: Request, res: Response) => {
-  res.json({ message: 'Tanu API is running!', status: 'healthy', timestamp: new Date().toISOString() });
+  res.json({ 
+    message: 'Tanu API is running!', 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    environment: {
+      nodeEnv: process.env.NODE_ENV,
+      port: port,
+      hasSpotifyCredentials: {
+        clientId: !!process.env.SPOTIFY_CLIENT_ID,
+        clientSecret: !!process.env.SPOTIFY_CLIENT_SECRET,
+        refreshToken: !!process.env.SPOTIFY_REFRESH_TOKEN
+      }
+    }
+  });
+});
+
+// Debug endpoint
+app.get('/api/debug', async (req: Request, res: Response) => {
+  try {
+    console.log('Debug endpoint called');
+    const songData = await getSpotifySongData();
+    res.json({
+      status: 'success',
+      songData: {
+        title: songData.title,
+        artist: songData.artist,
+        isPlaying: songData.isPlaying,
+        hasAlbumImage: !!songData.albumImageUrl
+      },
+      environment: {
+        hasClientId: !!process.env.SPOTIFY_CLIENT_ID,
+        hasClientSecret: !!process.env.SPOTIFY_CLIENT_SECRET,
+        hasRefreshToken: !!process.env.SPOTIFY_REFRESH_TOKEN
+      }
+    });
+  } catch (error) {
+    console.error('Debug endpoint error:', error);
+    res.status(500).json({
+      status: 'error',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      environment: {
+        hasClientId: !!process.env.SPOTIFY_CLIENT_ID,
+        hasClientSecret: !!process.env.SPOTIFY_CLIENT_SECRET,
+        hasRefreshToken: !!process.env.SPOTIFY_REFRESH_TOKEN
+      }
+    });
+  }
 });
 
 // Serve documentation page at root

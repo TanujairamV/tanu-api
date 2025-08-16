@@ -247,6 +247,7 @@
                 <button class="demo-button" onclick="fetchSongData()">Get Current Song</button>
                 <button class="demo-button" onclick="showSvgPreview()">Preview SVG</button>
                 <button class="demo-button" onclick="fetchHealthCheck()">Health Check</button>
+                <button class="demo-button" onclick="fetchDebug()">Debug Info</button>
                 
                 <div class="response-container">
                     <div id="svgPreview" style="display: none; text-align: center; margin: 20px 0;">
@@ -430,16 +431,23 @@ print(svg_content)</div>
             try {
                 // Add timestamp to prevent caching for demo
                 const timestamp = new Date().getTime();
-                const svgUrl = `/api/simple-svg?t=${timestamp}`;
+                const testUrl = `/api/test-svg?t=${timestamp}`;
+                const simpleUrl = `/api/simple-svg?t=${timestamp}`;
                 
                 // Create new image element to avoid null reference
                 svgPreview.innerHTML = `
                     <h4>SVG Preview:</h4>
                     <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 10px 0;">
-                        <img id="svgImageNew" src="${svgUrl}" alt="Spotify Song SVG" style="border: 1px solid #ddd; border-radius: 8px; max-width: 100%;">
+                        <p><strong>Test SVG:</strong></p>
+                        <img src="${testUrl}" alt="Test SVG" style="border: 1px solid #ddd; border-radius: 8px; max-width: 100%; margin-bottom: 10px;">
+                        <p><strong>Spotify SVG:</strong></p>
+                        <img id="svgImageNew" src="${simpleUrl}" alt="Spotify Song SVG" style="border: 1px solid #ddd; border-radius: 8px; max-width: 100%;">
                     </div>
                     <p style="font-size: 0.9rem; color: #666;">
-                        Use this URL in your README: <code>${window.location.origin}/api/simple-svg</code>
+                        <strong>URLs:</strong><br>
+                        Test: <code>${window.location.origin}/api/test-svg</code><br>
+                        Simple: <code>${window.location.origin}/api/simple-svg</code><br>
+                        Full: <code>${window.location.origin}/api/svg</code>
                     </p>
                 `;
                 
@@ -463,6 +471,31 @@ print(svg_content)</div>
                 svgPreview.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
                 button.disabled = false;
                 button.textContent = 'Preview SVG';
+            }
+        }
+        
+        async function fetchDebug() {
+            const button = document.querySelector('button[onclick="fetchDebug()"]');
+            const responseBox = document.getElementById('responseBox');
+            const songDisplay = document.getElementById('songDisplay');
+            const svgPreview = document.getElementById('svgPreview');
+            
+            button.disabled = true;
+            button.textContent = 'Debugging...';
+            responseBox.style.display = 'block';
+            responseBox.textContent = 'Getting debug info...';
+            if (songDisplay) songDisplay.style.display = 'none';
+            if (svgPreview) svgPreview.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/debug');
+                const data = await response.json();
+                responseBox.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseBox.textContent = `Debug Error: ${error.message}`;
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Debug Info';
             }
         }
     </script>
