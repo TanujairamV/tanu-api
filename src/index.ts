@@ -294,7 +294,5 @@ app.get('/', (req: Request, res: Response) => {
   res.sendFile(join(__dirname, '../public/index.html'));
 });
 
-// Start server
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+// Export the app instance for Vercel's serverless environment
+export default app;
